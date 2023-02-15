@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="2ed7d744-f336-4817-92a1-480854377add" >
+		<db:my-sql-connection host="sql12.freesqldatabase.com" port="3306" user="sql12598242" password="m2zvGrkv4B" database="sql12598242"/>
+	</db:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="af8df45a-f42a-4370-ae72-2debe38c8af0" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="test-external-dbFlow" doc:id="afbedf44-c9c3-443a-b445-22dd69ac358d" >
+		<http:listener doc:name="Listener" doc:id="fe9360d0-9e84-4af1-b1d0-26f56f79af7e" config-ref="HTTP_Listener_config" path="/check"/>
+		<db:select doc:name="Select" doc:id="6b2acc9e-a280-4167-81a5-af83885a2f9b" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * FROM LOGIN_CREDENTIALS WHERE USERID = :userId AND PASSWORD = :password]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"userId": attributes.queryParams.username,
+	"password": attributes.queryParams.password
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="1b5de1ad-3a44-4788-9411-12a9a4fe4067" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+if (payload == [])"Invalid username/password" else "Login Successful"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
